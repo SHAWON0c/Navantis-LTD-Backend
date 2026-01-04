@@ -51,44 +51,29 @@ const jwt = require('jsonwebtoken');
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Validate input
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
+  if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
   try {
-    // Find user by email
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
-    }
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user.isVerified) return res.status(403).json({ message: 'User not verified' });
 
-    // Check if user is verified
-    if (!user.isVerified) {
-      return res.status(403).json({ message: 'User not verified' }); // Forbidden
-    }
-
-    // Compare password
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
-    }
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
     // Generate JWT with role
     const token = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-        role: user.role // <-- include the role here
-      },
+      { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Successful login
-    res.status(200).json({ message: 'Login successful', token, role: user.role });
+    res.json({ message: 'Login successful', token, role: user.role });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
