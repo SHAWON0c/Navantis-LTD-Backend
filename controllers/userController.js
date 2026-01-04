@@ -1,10 +1,23 @@
 const User = require('../models/User');
 
-// GET all users
+// GET all users with optional limit & pagination
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
-    res.status(200).json(users);
+    // Default limit = 2 if not provided
+    const limit = parseInt(req.query.limit) || 2; 
+    const page = parseInt(req.query.page) || 1; 
+    const skip = (page - 1) * limit;
+
+    const users = await User.find().skip(skip).limit(limit);
+
+    const totalUsers = await User.countDocuments();
+
+    res.status(200).json({
+      total: totalUsers,
+      page,
+      limit,
+      users,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
