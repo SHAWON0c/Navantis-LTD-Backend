@@ -10,8 +10,8 @@ const {
 const authMiddleware = require("../middlewares/Authmiddleware");
 
 // Protected routes: Only superadmin can access
-router.post("/", authMiddleware(["superadmin"]), createPurchaseOrder);
-router.get("/", authMiddleware(["superadmin"]), getAllPurchaseOrders);
+router.post("/", createPurchaseOrder);
+router.get("/", getAllPurchaseOrders);
 router.get("/differences", getPurchaseOrderDifferenceOnly);
 
 module.exports = router;

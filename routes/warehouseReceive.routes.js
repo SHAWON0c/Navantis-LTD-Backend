@@ -10,7 +10,7 @@ const {
 const authMiddleware = require("../middlewares/Authmiddleware");
 
 router.post("/receive", createWarehouseReceive);
-router.get("/receive", authMiddleware(["superadmin"]), getAllWarehouseReceives);
+router.get("/receive", getAllWarehouseReceives);
 router.put("/:id", updateWarehouseReceive);
 router.get("/stock-in", getAllWarehouseStockIn);
 
