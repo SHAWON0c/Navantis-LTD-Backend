@@ -7,7 +7,7 @@ const {
   updateWarehouseReceive,
   getAllWarehouseStockIn
 } = require("../controllers/warehouse/warehouseReceive.controller");
-const authMiddleware = require("../middlewares/authmiddleware");
+const authMiddleware = require("../middlewares/Authmiddleware");
 
 router.post("/receive", createWarehouseReceive);
 router.get("/receive", authMiddleware(["superadmin"]), getAllWarehouseReceives);

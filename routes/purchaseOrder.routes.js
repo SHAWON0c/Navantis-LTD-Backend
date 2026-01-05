@@ -7,7 +7,7 @@ const {
   getPurchaseOrderDifferenceOnly
 } = require("../controllers/HQ/purchaseOrder.controller");
 
-const authMiddleware = require("../middlewares/authmiddleware");
+const authMiddleware = require("../middlewares/Authmiddleware");
 
 // Protected routes: Only superadmin can access
 router.post("/", authMiddleware(["superadmin"]), createPurchaseOrder);
