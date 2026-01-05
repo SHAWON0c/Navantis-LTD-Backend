@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../../models/User.model');
 
 // GET all users with optional limit & pagination
 exports.getAllUsers = async (req, res) => {

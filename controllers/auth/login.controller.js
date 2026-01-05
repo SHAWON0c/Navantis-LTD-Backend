@@ -45,7 +45,7 @@
 
 
 // controllers/auth/login.js
-const User = require('../../models/User');
+const User = require('../../models/User.model');
 const jwt = require('jsonwebtoken');
 
 exports.login = async (req, res) => {

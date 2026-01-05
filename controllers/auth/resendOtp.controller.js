@@ -1,6 +1,6 @@
 // controllers/auth/resendOtp.js
-const User = require('../../models/User');
-const OTPModel = require('../../models/Otp');
+const User = require('../../models/User.model');
+const OTPModel = require('../../models/Otp.model');
 const generateOTP = require('../../utils/generateOTP');
 const transporter = require('../../config/mailer');
 

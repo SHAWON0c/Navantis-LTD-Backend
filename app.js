@@ -3,10 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/Auth.routes');
+const userRoutes = require('./routes/User.routes');
 const purchaseOrderRoutes = require("./routes/purchaseOrder.routes");
-
+const warehouseReceiveRoutes = require("./routes/warehouseReceive.routes");
+const warehouseDamageRoutes = require("./routes/warehouseDamage.routes");
+const getWarehouseProductList=require("./routes/warehouseProduct.routes");
 const app = express();
 
 // Connect DB
@@ -20,6 +22,10 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes );
 app.use("/api/purchase-orders",purchaseOrderRoutes)
+app.use("/api/warehouse", warehouseReceiveRoutes)
+app.use("/api/warehouse", warehouseDamageRoutes);
+app.use("/api/warehouse",getWarehouseProductList );
+
 
 
 app.get('/', (req, res) => {

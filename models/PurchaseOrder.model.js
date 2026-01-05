@@ -25,8 +25,8 @@ const purchaseOrderSchema = new mongoose.Schema(
       required: true
     },
 
-    productQuality: {
-      type: String,
+    productQuantity: {
+      type: Number,
       required: true
     },
 

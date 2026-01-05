@@ -42,10 +42,10 @@
 
 
 // controllers/auth/register.js
-const User = require('../../models/User');
+const User = require('../../models/User.model');
 const generateOTP = require('../../utils/generateOTP');
 const transporter = require('../../config/mailer');
-const OTPModel = require('../../models/Otp');
+const OTPModel = require('../../models/Otp.model');
 
 exports.register = async (req, res) => {
   const { email, password, role } = req.body; // <-- include role from request

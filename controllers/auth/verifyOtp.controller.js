@@ -1,6 +1,6 @@
 // controllers/auth/verifyOtp.js
-const User = require('../../models/User');
-const OTPModel = require('../../models/Otp');
+const User = require('../../models/User.model');
+const OTPModel = require('../../models/Otp.model');
 const jwt = require('jsonwebtoken');
 
 exports.verifyOTP = async (req, res) => {
