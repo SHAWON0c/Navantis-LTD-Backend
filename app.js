@@ -29,7 +29,7 @@ app.use("/api/warehouse",getWarehouseProductList );
 
 
 app.get('/', (req, res) => {
-  res.send('🚀 API is running');
+  res.send('🚀 server is running');
 });
 
 
