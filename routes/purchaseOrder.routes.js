@@ -4,7 +4,8 @@ const router = express.Router();
 const {
   createPurchaseOrder,
   getAllPurchaseOrders,
-  getPurchaseOrderDifferenceOnly
+  getPurchaseOrderDifferenceOnly,
+  getAllPendingPurchaseOrders
 } = require("../controllers/HQ/purchaseOrder.controller");
 
 const authMiddleware = require("../middlewares/Authmiddleware");
@@ -13,5 +14,7 @@ const authMiddleware = require("../middlewares/Authmiddleware");
 router.post("/", createPurchaseOrder);
 router.get("/", getAllPurchaseOrders);
 router.get("/differences", getPurchaseOrderDifferenceOnly);
+router.get("/pending", getAllPendingPurchaseOrders);
+
 
 module.exports = router;

@@ -25,19 +25,53 @@ exports.createUser = async (req, res) => {
 };
 
 // Get user profile by ID
+// exports.getUserProfile = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const user = await User.findById(id).select('-password'); // exclude password
+//     if (!user) {
+//       return res.status(404).json({ success: false, message: "User not found" });
+//     }
+//     res.status(200).json({ success: true, data: user });
+//   } catch (error) {
+//     console.error("GET USER PROFILE ERROR:", error);
+//     res.status(500).json({ success: false, message: "Failed to fetch user profile", error: error.message });
+//   }
+// };
+
+
 exports.getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id).select('-password'); // exclude password
+
+    // 1️⃣ Fetch user info (exclude password)
+    const user = await User.findById(id).select("-password");
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-    res.status(200).json({ success: true, data: user });
+
+    // 2️⃣ Fetch organization profile linked to this user
+    const organizationProfile = await OrganizationProfile.findOne({ userId: id });
+
+    // 3️⃣ Return combined response
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        organizationProfile: organizationProfile || null, // if no org profile, return null
+      },
+    });
   } catch (error) {
     console.error("GET USER PROFILE ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch user profile", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user profile",
+      error: error.message,
+    });
   }
 };
+
+
 
 // Update user profile by ID
 // exports.updateUserProfile = async (req, res) => {

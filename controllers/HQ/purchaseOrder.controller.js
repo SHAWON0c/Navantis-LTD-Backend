@@ -84,6 +84,27 @@ exports.getAllPurchaseOrders = async (req, res) => {
 };
 
 
+exports.getAllPendingPurchaseOrders = async (req, res) => {
+  try {
+    const orders = await PurchaseOrder.find({
+      warehouseStatus: "pending"
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: orders.length,
+      data: orders
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch pending purchase orders"
+    });
+  }
+};
+
+
 
 
 

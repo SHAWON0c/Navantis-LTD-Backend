@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const purchaseOrderSchema = new mongoose.Schema(
   {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true
+    },
+
     productName: {
       type: String,
       required: true,
@@ -53,6 +59,13 @@ const purchaseOrderSchema = new mongoose.Schema(
     purchaseDate: {
       type: Date,
       default: Date.now
+    },
+
+    // ✅ DEFAULT warehouse status
+    warehouseStatus: {
+      type: String,
+      enum: ["pending", "partial", "received"],
+      default: "pending"
     },
 
     addedBy: {
