@@ -3,12 +3,64 @@ const PurchaseOrder = require("../../models/PurchaseOrder.model");
 const WarehouseStockIn = require("../../models/WarehouseStockIn.model");
 const WarehouseProduct = require("../../models/WarehouseProduct.model");
 const purchaseOrder = require("../../models/PurchaseOrder.model");
+const mongoose = require("mongoose");
+
+// exports.createWarehouseReceive = async (req, res) => {
+//     try {
+//         const { purchaseOrderId } = req.body;
+
+//         // 1️⃣ Check if purchaseOrderId is provided
+//         if (!purchaseOrderId) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "purchaseOrderId is required"
+//             });
+//         }
+
+//         // 2️⃣ Check if purchaseOrderId exists in PurchaseOrder collection
+//         const purchaseOrder = await PurchaseOrder.findById(purchaseOrderId);
+//         if (!purchaseOrder) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Invalid purchaseOrderId: Purchase Order not found"
+//             });
+//         }
+
+//         // 3️⃣ Check if this purchaseOrderId already exists in WarehouseReceive
+//         const existingReceive = await WarehouseReceive.findOne({ purchaseOrderId });
+//         if (existingReceive) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Warehouse receive for this Purchase Order already exists"
+//             });
+//         }
+
+//         // 4️⃣ Create the warehouse receive with default status "pending"
+//         const receive = await WarehouseReceive.create({
+//             ...req.body,
+//             status: "pending" // ✅ explicitly set default (optional if model default is used)
+//         });
+
+//         res.status(201).json({
+//             success: true,
+//             message: "Warehouse receive saved successfully",
+//             data: receive
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Failed to save warehouse receive"
+//         });
+//     }
+// };
+
 
 exports.createWarehouseReceive = async (req, res) => {
     try {
         const { purchaseOrderId } = req.body;
 
-        // 1️⃣ Check if purchaseOrderId is provided
+        // 1️⃣ Validate purchaseOrderId
         if (!purchaseOrderId) {
             return res.status(400).json({
                 success: false,
@@ -16,7 +68,7 @@ exports.createWarehouseReceive = async (req, res) => {
             });
         }
 
-        // 2️⃣ Check if purchaseOrderId exists in PurchaseOrder collection
+        // 2️⃣ Find the PurchaseOrder
         const purchaseOrder = await PurchaseOrder.findById(purchaseOrderId);
         if (!purchaseOrder) {
             return res.status(400).json({
@@ -25,7 +77,7 @@ exports.createWarehouseReceive = async (req, res) => {
             });
         }
 
-        // 3️⃣ Check if this purchaseOrderId already exists in WarehouseReceive
+        // 3️⃣ Check if a WarehouseReceive already exists for this purchase order
         const existingReceive = await WarehouseReceive.findOne({ purchaseOrderId });
         if (existingReceive) {
             return res.status(400).json({
@@ -34,17 +86,22 @@ exports.createWarehouseReceive = async (req, res) => {
             });
         }
 
-        // 4️⃣ Create the warehouse receive with default status "pending"
+        // 4️⃣ Create the WarehouseReceive with default status "pending"
         const receive = await WarehouseReceive.create({
             ...req.body,
-            status: "pending" // ✅ explicitly set default (optional if model default is used)
+            status: "pending" // warehouse receive status
         });
+
+        // 5️⃣ Update the PurchaseOrder warehouseStatus to "initialized"
+        purchaseOrder.warehouseStatus = "received";
+        await purchaseOrder.save();
 
         res.status(201).json({
             success: true,
-            message: "Warehouse receive saved successfully",
+            message: "Warehouse receive saved and PurchaseOrder warehouseStatus updated",
             data: receive
         });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -53,6 +110,7 @@ exports.createWarehouseReceive = async (req, res) => {
         });
     }
 };
+
 
 exports.getAllWarehouseReceives = async (req, res) => {
     try {
@@ -263,21 +321,181 @@ exports.getAllWarehouseStockIn = async (req, res) => {
 
 
 
+// exports.updateWarehouseReceive = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const updateData = req.body;
+
+//     // 1️⃣ Find the warehouse receive record
+//     const receive = await WarehouseReceive.findById(id);
+//     if (!receive) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Warehouse receive record not found"
+//       });
+//     }
+
+//     // 2️⃣ Block update if already approved
+//     if (receive.status?.toLowerCase() === "approved") {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Approved warehouse receive cannot be updated again"
+//       });
+//     }
+
+//     // 3️⃣ Update only allowed fields
+//     const allowedFields = [
+//       "receiveDate",
+//       "productName",
+//       "productShortCode",
+//       "netWeight",
+//       "batch",
+//       "expireDate",
+//       "boxQuantity",
+//       "productQuantityWithBox",
+//       "productQuantityWithoutBox",
+//       "remarks",
+//       "status",
+//       "addedBy",
+//       "actualPrice",
+//       "tradePrice"
+//     ];
+
+//     allowedFields.forEach(field => {
+//       if (updateData[field] !== undefined) {
+//         receive[field] = updateData[field];
+//       }
+//     });
+
+//     await receive.save();
+
+//     // 4️⃣ Process only if status is approved
+//     if (receive.status?.toLowerCase() === "approved") {
+//       const qtyWithBox = Number(receive.productQuantityWithBox || 0);
+//       const qtyWithoutBox = Number(receive.productQuantityWithoutBox || 0);
+//       const totalQty = qtyWithBox + qtyWithoutBox;
+
+//       if (totalQty <= 0) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Total quantity must be greater than zero"
+//         });
+//       }
+
+//       // 5️⃣ Prevent duplicate stock-in
+//       const stockExists = await WarehouseStockIn.findOne({
+//         warehouseReceiveId: receive._id
+//       });
+//       if (stockExists) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Stock already added for this warehouse receive"
+//         });
+//       }
+
+//       // 6️⃣ Create stock-in record
+//       await WarehouseStockIn.create({
+//         warehouseReceiveId: receive._id,
+//         purchaseOrderId: receive.purchaseOrderId,
+//         productName: receive.productName,
+//         productShortCode: receive.productShortCode,
+//         netWeight: receive.netWeight,
+//         batch: receive.batch,
+//         expireDate: receive.expireDate,
+//         boxQuantity: receive.boxQuantity,
+//         productQuantityWithBox: qtyWithBox,
+//         productQuantityWithoutBox: qtyWithoutBox,
+//         remarks: receive.remarks,
+//         addedBy: receive.addedBy,
+//         stockInDate: new Date()
+//       });
+
+//       // 7️⃣ Create or update WarehouseProduct
+//       const productCode =
+//         receive.productShortCode || `AUTO-${Date.now()}`;
+
+//       const existingProduct = await WarehouseProduct.findOne({
+//         productCode,
+//         batch: receive.batch,
+//         "netWeight.value": receive.netWeight?.value,
+//         "netWeight.unit": receive.netWeight?.unit,
+//         expireDate: receive.expireDate
+//       });
+
+//       if (existingProduct) {
+//         existingProduct.totalQuantity =
+//           (existingProduct.totalQuantity || 0) + totalQty;
+//         await existingProduct.save();
+//       } else {
+//         await WarehouseProduct.create({
+//           productName: receive.productName,
+//           productCode,
+//           netWeight: receive.netWeight,
+//           batch: receive.batch,
+//           expireDate: receive.expireDate,
+//           totalQuantity: totalQty,
+//           actualPrice: receive.actualPrice,
+//           tradePrice: receive.tradePrice,
+//           lastStockInDate: new Date()
+//         });
+//       }
+
+//       // 8️⃣ Update related Purchase Order warehouse status
+//       if (receive.purchaseOrderId) {
+//         await PurchaseOrder.findByIdAndUpdate(
+//           receive.purchaseOrderId,
+//           { warehouseStatus: "approved" },
+//           { new: true }
+//         );
+//       }
+//     }
+
+//     return res.json({
+//       success: true,
+//       message: "Warehouse receive updated successfully",
+//       data: receive
+//     });
+
+//   } catch (error) {
+//     console.error("WAREHOUSE RECEIVE UPDATE ERROR:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to update warehouse receive",
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+
 exports.updateWarehouseReceive = async (req, res) => {
   try {
-    const { id } = req.params;
+    // :id === purchaseOrderId
+    const purchaseOrderId = req.params.id;
     const updateData = req.body;
 
-    // 1️⃣ Find the warehouse receive record
-    const receive = await WarehouseReceive.findById(id);
-    if (!receive) {
-      return res.status(404).json({
+    // ✅ Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(purchaseOrderId)) {
+      return res.status(400).json({
         success: false,
-        message: "Warehouse receive record not found"
+        message: "Invalid purchaseOrderId format"
       });
     }
 
-    // 2️⃣ Block update if already approved
+    // ✅ Find WarehouseReceive by purchaseOrderId
+    const receive = await WarehouseReceive.findOne({
+      purchaseOrderId
+    });
+
+    if (!receive) {
+      return res.status(404).json({
+        success: false,
+        message: "Warehouse receive record not found for this purchase order"
+      });
+    }
+
+    // ❌ Block update if already approved
     if (receive.status?.toLowerCase() === "approved") {
       return res.status(400).json({
         success: false,
@@ -285,7 +503,7 @@ exports.updateWarehouseReceive = async (req, res) => {
       });
     }
 
-    // 3️⃣ Update only allowed fields
+    // ✅ Allowed fields
     const allowedFields = [
       "receiveDate",
       "productName",
@@ -311,7 +529,7 @@ exports.updateWarehouseReceive = async (req, res) => {
 
     await receive.save();
 
-    // 4️⃣ Process only if status is approved
+    // ✅ Process only if approved
     if (receive.status?.toLowerCase() === "approved") {
       const qtyWithBox = Number(receive.productQuantityWithBox || 0);
       const qtyWithoutBox = Number(receive.productQuantityWithoutBox || 0);
@@ -324,7 +542,7 @@ exports.updateWarehouseReceive = async (req, res) => {
         });
       }
 
-      // 5️⃣ Prevent duplicate stock-in
+      // ❌ Prevent duplicate stock-in
       const stockExists = await WarehouseStockIn.findOne({
         warehouseReceiveId: receive._id
       });
@@ -335,7 +553,7 @@ exports.updateWarehouseReceive = async (req, res) => {
         });
       }
 
-      // 6️⃣ Create stock-in record
+      // ✅ Stock-in
       await WarehouseStockIn.create({
         warehouseReceiveId: receive._id,
         purchaseOrderId: receive.purchaseOrderId,
@@ -352,7 +570,7 @@ exports.updateWarehouseReceive = async (req, res) => {
         stockInDate: new Date()
       });
 
-      // 7️⃣ Create or update WarehouseProduct
+      // ✅ WarehouseProduct update / create
       const productCode =
         receive.productShortCode || `AUTO-${Date.now()}`;
 
@@ -382,14 +600,11 @@ exports.updateWarehouseReceive = async (req, res) => {
         });
       }
 
-      // 8️⃣ Update related Purchase Order warehouse status
-      if (receive.purchaseOrderId) {
-        await PurchaseOrder.findByIdAndUpdate(
-          receive.purchaseOrderId,
-          { warehouseStatus: "approved" },
-          { new: true }
-        );
-      }
+      // ✅ Update PurchaseOrder status
+      await PurchaseOrder.findByIdAndUpdate(
+        receive.purchaseOrderId,
+        { warehouseStatus: "approved" }
+      );
     }
 
     return res.json({
@@ -407,3 +622,4 @@ exports.updateWarehouseReceive = async (req, res) => {
     });
   }
 };
+

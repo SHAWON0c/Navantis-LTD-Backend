@@ -64,7 +64,7 @@ const purchaseOrderSchema = new mongoose.Schema(
     // ✅ DEFAULT warehouse status
     warehouseStatus: {
       type: String,
-      enum: ["pending", "partial", "received"],
+      enum: ["pending", "received"],
       default: "pending"
     },
 

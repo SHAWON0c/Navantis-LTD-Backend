@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createProduct, getAllProducts, getAllBrands, getProductsByBrand, updateProduct } = require('../controllers/products/product.controller');
+const { createProduct, getAllProducts, getAllBrands, getProductsByBrand, updateProduct, getProductById } = require('../controllers/products/product.controller');
 const AuthMiddleware = require('../middlewares/authMiddleware');
 
 // Create a new product (protected: only IT-Officer or admin)
@@ -14,5 +14,9 @@ router.get('/brand/:brandName', getProductsByBrand);
 
 router.patch("/:id", updateProduct); // partial update
 router.put("/:id", updateProduct);
+
+// Get single product by ID
+router.get('/:id', getProductById);
+
 
 module.exports = router;

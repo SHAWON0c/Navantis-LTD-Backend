@@ -22,6 +22,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true
+    },
+    category: {  // <-- Added category field
+      type: String,
+      required: true,
+      trim: true
     }
   },
   { timestamps: true }

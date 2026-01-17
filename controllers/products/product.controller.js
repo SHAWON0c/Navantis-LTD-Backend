@@ -3,12 +3,12 @@ const Product = require('../../models/Product.model');
 // Create a new product
 const createProduct = async (req, res) => {
   try {
-    const { productName, brand, productShortCode, packSize } = req.body;
+    const { productName, brand, productShortCode, packSize, category } = req.body;
 
-    // Validate packSize early
-    if (!packSize) {
+    // Validate required fields
+    if (!productName || !brand || !productShortCode || !packSize || !category) {
       return res.status(400).json({
-        message: "packSize is required"
+        message: "All fields (productName, brand, productShortCode, packSize, category) are required"
       });
     }
 
@@ -24,13 +24,14 @@ const createProduct = async (req, res) => {
       productName,
       brand,
       productShortCode,
-      packSize
+      packSize,
+      category
     });
 
     await product.save();
 
     res.status(201).json({
-      message: "Product created",
+      message: "Product created successfully",
       product
     });
 
@@ -44,37 +45,19 @@ const createProduct = async (req, res) => {
 // Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const brands = await Product.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: "$brand",
-          products: {
-            $push: {
-              _id: "$_id",                  // ✅ Include product ID
-              productName: "$productName",
-              productShortCode: "$productShortCode",
-              packSize: "$packSize"          // optional: include packSize too
-            }
-          }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          brand: "$_id",
-          products: 1
-        }
-      }
-    ]);
+    // Fetch all products, sorted by creation date descending
+    const products = await Product.find().sort({ createdAt: -1 });
 
-    res.status(200).json({ brands });
+    res.status(200).json({ products });
 
   } catch (err) {
     console.error("❌ getAllProducts error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
 
 
 
@@ -93,18 +76,25 @@ const getProductsByBrand = async (req, res) => {
   try {
     const { brandName } = req.params;
 
-    const products = await Product.find({ brand: brandName })
-      .sort({ createdAt: -1 });
+    if (!brandName) {
+      return res.status(400).json({ message: "Brand name is required" });
+    }
+
+    // Fetch all products for this brand, including all fields
+    const products = await Product.find({ brand: brandName }).sort({ createdAt: -1 });
 
     res.status(200).json({
       brand: brandName,
       products
     });
+
   } catch (err) {
     console.error("❌ getProductsByBrand error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 
 
 
@@ -154,5 +144,28 @@ const updateProduct = async (req, res) => {
 };
 
 
+// Get single product by ID
+const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-module.exports = { createProduct, getAllProducts, getAllBrands ,getProductsByBrand ,updateProduct };
+    if (!id) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json({ product });
+
+  } catch (err) {
+    console.error("❌ getProductById error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+module.exports = { createProduct, getAllProducts, getAllBrands ,getProductsByBrand ,updateProduct , getProductById};

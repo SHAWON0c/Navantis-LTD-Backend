@@ -111,25 +111,82 @@ exports.getAllPendingPurchaseOrders = async (req, res) => {
 // const PurchaseOrder = require("../models/PurchaseOrder");
 // const WarehouseReceive = require("../models/WarehouseReceive");
 
+// exports.getPurchaseOrderDifferenceOnly = async (req, res) => {
+//   try {
+//     // 1️⃣ Fetch all warehouse receives
+//     const warehouseReceives = await WarehouseReceive.find();
+
+//     // 2️⃣ Map purchaseOrderId → total received quantity
+//     const receivedMap = {};
+//     warehouseReceives.forEach(r => {
+//       const poId = r.purchaseOrderId.toString();
+//       const totalReceived =
+//         (r.productQuantityWithBox || 0) + (r.productQuantityWithoutBox || 0);
+
+//       receivedMap[poId] = (receivedMap[poId] || 0) + totalReceived;
+//     });
+
+//     // 3️⃣ Fetch all purchase orders
+//     const purchaseOrders = await PurchaseOrder.find();
+
+//     // 4️⃣ Calculate stock vs order vs missing
+//     const result = purchaseOrders.map((po, index) => {
+//       const stockQuantity = receivedMap[po._id.toString()] || 0;
+//       const orderQuantity = po.productQuantity || 0;
+//       const missingQuantity = orderQuantity - stockQuantity;
+
+//       return {
+//         slNo: index + 1,
+//         purchaseOrderId: po._id,
+//         productName: po.productName,
+//         batch: po.batch,
+//         exp: po.expireDate,
+//         orderQuantity,
+//         stockQuantity,
+//         missingQuantity: missingQuantity < 0 ? 0 : missingQuantity // avoid negative
+//       };
+//     });
+
+//     res.json({ success: true, count: result.length, data: result });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch purchase order differences"
+//     });
+//   }
+// };
+
+
+
 exports.getPurchaseOrderDifferenceOnly = async (req, res) => {
   try {
-    // 1️⃣ Fetch all warehouse receives
-    const warehouseReceives = await WarehouseReceive.find();
+    // 1️⃣ Fetch ONLY pending warehouse receives
+    const warehouseReceives = await WarehouseReceive.find({
+      status: "pending"
+    });
 
     // 2️⃣ Map purchaseOrderId → total received quantity
     const receivedMap = {};
+    const purchaseOrderIds = new Set();
+
     warehouseReceives.forEach(r => {
       const poId = r.purchaseOrderId.toString();
+      purchaseOrderIds.add(poId);
+
       const totalReceived =
-        (r.productQuantityWithBox || 0) + (r.productQuantityWithoutBox || 0);
+        (r.productQuantityWithBox || 0) +
+        (r.productQuantityWithoutBox || 0);
 
       receivedMap[poId] = (receivedMap[poId] || 0) + totalReceived;
     });
 
-    // 3️⃣ Fetch all purchase orders
-    const purchaseOrders = await PurchaseOrder.find();
+    // 3️⃣ Fetch ONLY matched purchase orders
+    const purchaseOrders = await PurchaseOrder.find({
+      _id: { $in: [...purchaseOrderIds] }
+    });
 
-    // 4️⃣ Calculate stock vs order vs missing
+    // 4️⃣ Calculate order vs stock vs missing
     const result = purchaseOrders.map((po, index) => {
       const stockQuantity = receivedMap[po._id.toString()] || 0;
       const orderQuantity = po.productQuantity || 0;
@@ -143,16 +200,20 @@ exports.getPurchaseOrderDifferenceOnly = async (req, res) => {
         exp: po.expireDate,
         orderQuantity,
         stockQuantity,
-        missingQuantity: missingQuantity < 0 ? 0 : missingQuantity // avoid negative
+        missingQuantity: missingQuantity < 0 ? 0 : missingQuantity
       };
     });
 
-    res.json({ success: true, count: result.length, data: result });
+    res.json({
+      success: true,
+      count: result.length,
+      data: result
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch purchase order differences"
+      message: "Failed to fetch pending purchase order differences"
     });
   }
 };
