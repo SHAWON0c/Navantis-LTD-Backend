@@ -16,7 +16,7 @@ const depotRequestSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 1 },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "rejected", "requested"],
       default: "pending"
     }
   },

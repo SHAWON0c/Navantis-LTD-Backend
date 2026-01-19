@@ -58,18 +58,23 @@ exports.createWarehouseDamage = async (req, res) => {
 
 exports.getWarehouseDamageReport = async (req, res) => {
   try {
-    // 1️⃣ Fetch all damage records (no filter)
-    const damages = await WarehouseDamage.find().sort({ createdAt: -1 });
+    // 1️⃣ Fetch ONLY pending damage records
+    const damages = await WarehouseDamage
+      .find({ status: "pending" })
+      .sort({ createdAt: -1 });
 
     // 2️⃣ Format for table
     const report = damages.map((d, index) => {
-      const receivedQty = (d.productQuantityWithBox || 0) + (d.productQuantityWithoutBox || 0);
+      const receivedQty =
+        (d.productQuantityWithBox || 0) +
+        (d.productQuantityWithoutBox || 0);
+
       const damageQty = d.damageQuantity || 0;
       const remainingStock = receivedQty - damageQty;
 
       return {
         slNo: index + 1,
-        id: d._id, // include ID for easier PUT requests
+        id: d._id,
         productName: d.productName,
         batch: d.batch,
         exp: d.expireDate,
@@ -77,7 +82,7 @@ exports.getWarehouseDamageReport = async (req, res) => {
         damageQty,
         remainingStock,
         remarks: d.remarks || "",
-        status: d.status, // pending or approved
+        status: d.status, // always "pending" now
         addedBy: d.addedBy,
         warehouseReceiveId: d.warehouseReceiveId,
         purchaseOrderId: d.purchaseOrderId,
@@ -101,6 +106,61 @@ exports.getWarehouseDamageReport = async (req, res) => {
 
 
 
+exports.getAllWarehouseDamages = async (req, res) => {
+  try {
+    let { status } = req.query;
+
+    let filter = {};
+
+    // Default: pending
+    if (!status || status === "approved") {
+      filter.status = "approved";
+    } else if (status === "pending") {
+      filter.status = "pending";
+    }
+    // if status === "all", leave filter empty to fetch everything
+
+    const damages = await WarehouseDamage.find(filter).sort({ createdAt: -1 });
+
+    const report = damages.map((d, index) => {
+      const receivedQty =
+        (d.productQuantityWithBox || 0) +
+        (d.productQuantityWithoutBox || 0);
+
+      const damageQty = d.damageQuantity || 0;
+
+      return {
+        slNo: index + 1,
+        id: d._id,
+        productName: d.productName,
+        batch: d.batch,
+        exp: d.expireDate,
+        receivedQty,
+        damageQty,
+        remainingStock: receivedQty - damageQty,
+        remarks: d.remarks || "",
+        status: d.status,
+        addedBy: d.addedBy,
+        warehouseReceiveId: d.warehouseReceiveId,
+        purchaseOrderId: d.purchaseOrderId,
+        netWeight: d.netWeight,
+        createdAt: d.createdAt,
+      };
+    });
+
+    res.json({
+      success: true,
+      count: report.length,
+      data: report,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch warehouse damages",
+    });
+  }
+};
 
 
 

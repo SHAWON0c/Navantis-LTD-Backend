@@ -14,6 +14,9 @@ router.post("/", createDepotRequest);
 router.get("/pending", (req, res) => getDepotRequestsByStatus({ ...req, params: { status: "pending" } }, res));
 router.get("/approved", (req, res) => getDepotRequestsByStatus({ ...req, params: { status: "approved" } }, res));
 
+router.get("/requested", (req, res) => getDepotRequestsByStatus({ ...req, params: { status: "requested" } }, res));
+
+
 
 // Update request status
 router.patch("/:id/status", updateDepotRequestStatus);

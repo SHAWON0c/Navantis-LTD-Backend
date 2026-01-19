@@ -469,9 +469,167 @@ exports.getAllWarehouseStockIn = async (req, res) => {
 
 
 
+// exports.updateWarehouseReceive = async (req, res) => {
+//   try {
+//     // :id === purchaseOrderId
+//     const purchaseOrderId = req.params.id;
+//     const updateData = req.body;
+
+//     // ✅ Validate ObjectId
+//     if (!mongoose.Types.ObjectId.isValid(purchaseOrderId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid purchaseOrderId format"
+//       });
+//     }
+
+//     // ✅ Find WarehouseReceive by purchaseOrderId
+//     const receive = await WarehouseReceive.findOne({
+//       purchaseOrderId
+//     });
+
+//     if (!receive) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Warehouse receive record not found for this purchase order"
+//       });
+//     }
+
+//     // ❌ Block update if already approved
+//     if (receive.status?.toLowerCase() === "approved") {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Approved warehouse receive cannot be updated again"
+//       });
+//     }
+
+//     // ✅ Allowed fields
+//     const allowedFields = [
+//       "receiveDate",
+//       "productName",
+//       "productShortCode",
+//       "netWeight",
+//       "batch",
+//       "expireDate",
+//       "boxQuantity",
+//       "productQuantityWithBox",
+//       "productQuantityWithoutBox",
+//       "remarks",
+//       "status",
+//       "addedBy",
+//       "actualPrice",
+//       "tradePrice"
+//     ];
+
+//     allowedFields.forEach(field => {
+//       if (updateData[field] !== undefined) {
+//         receive[field] = updateData[field];
+//       }
+//     });
+
+//     await receive.save();
+
+//     // ✅ Process only if approved
+//     if (receive.status?.toLowerCase() === "approved") {
+//       const qtyWithBox = Number(receive.productQuantityWithBox || 0);
+//       const qtyWithoutBox = Number(receive.productQuantityWithoutBox || 0);
+//       const totalQty = qtyWithBox + qtyWithoutBox;
+
+//       if (totalQty <= 0) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Total quantity must be greater than zero"
+//         });
+//       }
+
+//       // ❌ Prevent duplicate stock-in
+//       const stockExists = await WarehouseStockIn.findOne({
+//         warehouseReceiveId: receive._id
+//       });
+//       if (stockExists) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Stock already added for this warehouse receive"
+//         });
+//       }
+
+//       // ✅ Stock-in
+//       await WarehouseStockIn.create({
+//         warehouseReceiveId: receive._id,
+//         purchaseOrderId: receive.purchaseOrderId,
+//         productName: receive.productName,
+//         productShortCode: receive.productShortCode,
+//         netWeight: receive.netWeight,
+//         batch: receive.batch,
+//         expireDate: receive.expireDate,
+//         boxQuantity: receive.boxQuantity,
+//         productQuantityWithBox: qtyWithBox,
+//         productQuantityWithoutBox: qtyWithoutBox,
+//         remarks: receive.remarks,
+//         addedBy: receive.addedBy,
+//         stockInDate: new Date()
+//       });
+
+//       // ✅ WarehouseProduct update / create
+//       const productCode =
+//         receive.productShortCode || `AUTO-${Date.now()}`;
+
+//       const existingProduct = await WarehouseProduct.findOne({
+//         productCode,
+//         batch: receive.batch,
+//         "netWeight.value": receive.netWeight?.value,
+//         "netWeight.unit": receive.netWeight?.unit,
+//         expireDate: receive.expireDate
+//       });
+
+//       if (existingProduct) {
+//         existingProduct.totalQuantity =
+//           (existingProduct.totalQuantity || 0) + totalQty;
+//         await existingProduct.save();
+//       } else {
+//         await WarehouseProduct.create({
+//           productName: receive.productName,
+//           productCode,
+//           netWeight: receive.netWeight,
+//           batch: receive.batch,
+//           expireDate: receive.expireDate,
+//           totalQuantity: totalQty,
+//           actualPrice: receive.actualPrice,
+//           tradePrice: receive.tradePrice,
+//           lastStockInDate: new Date()
+//         });
+//       }
+
+//       // ✅ Update PurchaseOrder status
+//       await PurchaseOrder.findByIdAndUpdate(
+//         receive.purchaseOrderId,
+//         { warehouseStatus: "approved" }
+//       );
+//     }
+
+//     return res.json({
+//       success: true,
+//       message: "Warehouse receive updated successfully",
+//       data: receive
+//     });
+
+//   } catch (error) {
+//     console.error("WAREHOUSE RECEIVE UPDATE ERROR:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to update warehouse receive",
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+
+
+
 exports.updateWarehouseReceive = async (req, res) => {
   try {
-    // :id === purchaseOrderId
     const purchaseOrderId = req.params.id;
     const updateData = req.body;
 
@@ -484,9 +642,7 @@ exports.updateWarehouseReceive = async (req, res) => {
     }
 
     // ✅ Find WarehouseReceive by purchaseOrderId
-    const receive = await WarehouseReceive.findOne({
-      purchaseOrderId
-    });
+    const receive = await WarehouseReceive.findOne({ purchaseOrderId });
 
     if (!receive) {
       return res.status(404).json({
@@ -503,7 +659,7 @@ exports.updateWarehouseReceive = async (req, res) => {
       });
     }
 
-    // ✅ Allowed fields
+    // ✅ Update allowed fields
     const allowedFields = [
       "receiveDate",
       "productName",
@@ -553,7 +709,7 @@ exports.updateWarehouseReceive = async (req, res) => {
         });
       }
 
-      // ✅ Stock-in
+      // ✅ Create stock-in
       await WarehouseStockIn.create({
         warehouseReceiveId: receive._id,
         purchaseOrderId: receive.purchaseOrderId,
@@ -570,9 +726,8 @@ exports.updateWarehouseReceive = async (req, res) => {
         stockInDate: new Date()
       });
 
-      // ✅ WarehouseProduct update / create
-      const productCode =
-        receive.productShortCode || `AUTO-${Date.now()}`;
+      // ✅ WarehouseProduct create / update
+      const productCode = receive.productShortCode || `AUTO-${Date.now()}`;
 
       const existingProduct = await WarehouseProduct.findOne({
         productCode,
@@ -583,10 +738,12 @@ exports.updateWarehouseReceive = async (req, res) => {
       });
 
       if (existingProduct) {
+        // Update total quantity if already exists
         existingProduct.totalQuantity =
           (existingProduct.totalQuantity || 0) + totalQty;
         await existingProduct.save();
       } else {
+        // ✅ Create new product with both IDs
         await WarehouseProduct.create({
           productName: receive.productName,
           productCode,
@@ -596,7 +753,9 @@ exports.updateWarehouseReceive = async (req, res) => {
           totalQuantity: totalQty,
           actualPrice: receive.actualPrice,
           tradePrice: receive.tradePrice,
-          lastStockInDate: new Date()
+          lastStockInDate: new Date(),
+          warehouseReceiveId: receive._id,     // ✅ WarehouseReceive reference
+          purchaseOrderId: receive.purchaseOrderId // ✅ PurchaseOrder reference
         });
       }
 
@@ -622,4 +781,3 @@ exports.updateWarehouseReceive = async (req, res) => {
     });
   }
 };
-

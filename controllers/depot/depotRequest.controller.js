@@ -57,7 +57,7 @@ const getDepotRequestsByStatus = async (req, res) => {
     const { status } = req.params;
 
     // Validate status
-    if (!["pending", "approved", "rejected"].includes(status)) {
+    if (!["pending", "approved", "rejected", "requested"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
@@ -83,8 +83,8 @@ const updateDepotRequestStatus = async (req, res) => {
     const { status, quantity } = req.body; // quantity is optional
 
     // Validate status
-    if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });
+    if (!["approved", "requested"].includes(status)) {
+      return res.status(400).json({ message: "Status must be 'approved' or 'requested'" });
     }
 
     // Find the request
