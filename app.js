@@ -56,7 +56,7 @@ const designationPermissionRoutes = require("./routes/designationPermission.rout
 const productRoutes = require('./routes/products.routes');
 const doctorRoutes = require('./routes/doctors.routes');
 const depotRequestRoutes = require('./routes/depotRequest.routes');
-
+const areaRoutes = require('./routes/area.routes');
 const app = express();
 
 // ───────────── DATABASE ─────────────
@@ -78,6 +78,8 @@ app.use('/api/depotRequests', depotRequestRoutes);
 app.use("/api/permissions", designationPermissionRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/doctors', doctorRoutes);
+
+app.use("/api/areas", areaRoutes);
 
 // ───────────── HEALTH CHECK ─────────────
 app.get('/', (req, res) => {

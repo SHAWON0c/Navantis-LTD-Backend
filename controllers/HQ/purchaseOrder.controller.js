@@ -64,24 +64,35 @@ exports.createPurchaseOrder = async (req, res) => {
 // };
 
 
+// controllers/purchaseOrder.controller.js
+
 exports.getAllPurchaseOrders = async (req, res) => {
   try {
-    // Fetch all orders, no field selection, sorted by creation date
+    // Fetch all orders, sorted by creation date
     const orders = await PurchaseOrder.find().sort({ createdAt: -1 });
 
-    res.json({
+    // Calculate totals
+    const totalUnits = orders.reduce((sum, o) => sum + (o.productQuantity || 0), 0);
+    const totalTradePrice = orders.reduce((sum, o) => sum + ((o.tradePrice || 0) * (o.productQuantity || 0)), 0);
+    const uniqueProductsCount = new Set(orders.map(o => o.productId)).size;
+
+    res.status(200).json({
       success: true,
       count: orders.length,
+      uniqueProductsCount,
+      totalUnits,
+      totalTradePrice,
       data: orders
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching purchase orders:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch purchase orders"
     });
   }
 };
+
 
 
 exports.getAllPendingPurchaseOrders = async (req, res) => {
