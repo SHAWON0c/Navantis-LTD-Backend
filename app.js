@@ -57,6 +57,7 @@ const productRoutes = require('./routes/products.routes');
 const doctorRoutes = require('./routes/doctors.routes');
 const depotRequestRoutes = require('./routes/depotRequest.routes');
 const areaRoutes = require('./routes/area.routes');
+const territoryRoutes = require('./routes/territory.routes');
 const app = express();
 
 // ───────────── DATABASE ─────────────
@@ -80,6 +81,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/doctors', doctorRoutes);
 
 app.use("/api/areas", areaRoutes);
+app.use("/api/territories", territoryRoutes);
 
 // ───────────── HEALTH CHECK ─────────────
 app.get('/', (req, res) => {

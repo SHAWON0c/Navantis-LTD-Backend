@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Area = require("../../models/Area.model");
-const User = require("../../models/user.model");
+const User = require("../../models/User.model");
 const OrganizationProfile = require("../../models/OrganizationProfile.model");
 
 // 1️⃣ Create Area (POST)
