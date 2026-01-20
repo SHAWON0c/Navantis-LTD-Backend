@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Area = require("../../models/Area.model");
 const User = require("../../models/user.model");
-
+const OrganizationProfile = require("../../models/OrganizationProfile.model");
 
 // 1️⃣ Create Area (POST)
 exports.createArea = async (req, res) => {
@@ -108,17 +108,118 @@ exports.updateAreaManagers = async (req, res) => {
 };
 
 
-// 3️⃣ Get all areas
+
+// exports.getAreas = async (req, res) => {
+//   try {
+//     // 1️⃣ Get areas with users
+//     const areas = await Area.find()
+//       .populate("areaManagerId", "email role")
+//       .populate("zonalManagerId", "email role")
+//       .sort({ createdAt: -1 })
+//       .lean();
+
+//     // 2️⃣ Collect userIds
+//     const userIds = [];
+//     areas.forEach(area => {
+//       if (area.areaManagerId) userIds.push(area.areaManagerId._id);
+//       if (area.zonalManagerId) userIds.push(area.zonalManagerId._id);
+//     });
+
+//     // 3️⃣ Fetch organization profiles
+//     const profiles = await OrganizationProfile.find({
+//       userId: { $in: userIds }
+//     }).select("userId name designation");
+
+//     // 4️⃣ Create lookup map
+//     const profileMap = {};
+//     profiles.forEach(p => {
+//       profileMap[p.userId.toString()] = p;
+//     });
+
+//     // 5️⃣ Attach organization names
+//     const formattedAreas = areas.map(area => ({
+//       ...area,
+//       areaManager: area.areaManagerId
+//         ? {
+//             email: area.areaManagerId.email,
+//             role: area.areaManagerId.role,
+//             name: profileMap[area.areaManagerId._id?.toString()]?.name || null,
+//             designation: profileMap[area.areaManagerId._id?.toString()]?.designation || null
+//           }
+//         : null,
+//       zonalManager: area.zonalManagerId
+//         ? {
+//             email: area.zonalManagerId.email,
+//             role: area.zonalManagerId.role,
+//             name: profileMap[area.zonalManagerId._id?.toString()]?.name || null,
+//             designation: profileMap[area.zonalManagerId._id?.toString()]?.designation || null
+//           }
+//         : null
+//     }));
+
+//     res.status(200).json({ success: true, areas: formattedAreas });
+
+//   } catch (err) {
+//     console.error("GET AREAS ERROR ❌", err);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
+
 exports.getAreas = async (req, res) => {
   try {
+    // 1️⃣ Get areas with users
     const areas = await Area.find()
-      .populate("areaManagerId", "name email role")
-      .populate("zonalManagerId", "name email")
-      .sort({ createdAt: -1 });
+      .populate("areaManagerId", "email role")
+      .populate("zonalManagerId", "email role")
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.status(200).json({ areas });
+    // 2️⃣ Collect userIds
+    const userIds = [];
+    areas.forEach(area => {
+      if (area.areaManagerId) userIds.push(area.areaManagerId._id);
+      if (area.zonalManagerId) userIds.push(area.zonalManagerId._id);
+    });
+
+    // 3️⃣ Fetch organization profiles
+    const profiles = await OrganizationProfile.find({
+      userId: { $in: userIds }
+    }).select("userId name designation");
+
+    // 4️⃣ Create lookup map
+    const profileMap = {};
+    profiles.forEach(p => {
+      profileMap[p.userId.toString()] = p;
+    });
+
+    // 5️⃣ Attach organization names + keep userId
+    const formattedAreas = areas.map(area => ({
+      ...area,
+      areaManager: area.areaManagerId
+        ? {
+            userId: area.areaManagerId._id,           // ✅ Added userId
+            email: area.areaManagerId.email,
+            role: area.areaManagerId.role,
+            name: profileMap[area.areaManagerId._id?.toString()]?.name || null,
+            designation: profileMap[area.areaManagerId._id?.toString()]?.designation || null
+          }
+        : null,
+      zonalManager: area.zonalManagerId
+        ? {
+            userId: area.zonalManagerId._id,          // ✅ Added userId
+            email: area.zonalManagerId.email,
+            role: area.zonalManagerId.role,
+            name: profileMap[area.zonalManagerId._id?.toString()]?.name || null,
+            designation: profileMap[area.zonalManagerId._id?.toString()]?.designation || null
+          }
+        : null
+    }));
+
+    res.status(200).json({ success: true, areas: formattedAreas });
+
   } catch (err) {
     console.error("GET AREAS ERROR ❌", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

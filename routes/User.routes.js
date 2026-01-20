@@ -6,7 +6,8 @@ const {
   getUserProfile,
   updateUserProfile,
   getOrganizationProfile,
-  getAllOrganizationProfiles
+  getAllOrganizationProfiles,
+  getAreaAndZonalManagers
 } = require('../controllers/users/user.controller');
 const Authmiddleware = require('../middlewares/authMiddleware');
 
@@ -16,7 +17,9 @@ router.get('/organization/:userId', getOrganizationProfile);        // Get singl
 
 // 2️⃣ User routes
 router.get('/', Authmiddleware(['superadmin']), getAllUsers);           // Get all users
-router.post('/', createUser);           // Create new user
+router.post('/', createUser);  
+router.get("/managers", getAreaAndZonalManagers); // Get Area and Zonal Managers
+         // Create new user
 router.get('/:id', getUserProfile);     // Get user by ID
 router.put('/:id', updateUserProfile);  // Update user by ID
 

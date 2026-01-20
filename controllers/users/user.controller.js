@@ -24,20 +24,6 @@ exports.createUser = async (req, res) => {
   }
 };
 
-// Get user profile by ID
-// exports.getUserProfile = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const user = await User.findById(id).select('-password'); // exclude password
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-//     res.status(200).json({ success: true, data: user });
-//   } catch (error) {
-//     console.error("GET USER PROFILE ERROR:", error);
-//     res.status(500).json({ success: false, message: "Failed to fetch user profile", error: error.message });
-//   }
-// };
 
 
 exports.getUserProfile = async (req, res) => {
@@ -73,30 +59,6 @@ exports.getUserProfile = async (req, res) => {
 
 
 
-// Update user profile by ID
-// exports.updateUserProfile = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const updateData = req.body;
-
-//     // Only allow certain fields to be updated
-//     const allowedFields = ["name", "email", "phone", "role"];
-//     const updatedFields = {};
-//     allowedFields.forEach(field => {
-//       if (updateData[field] !== undefined) updatedFields[field] = updateData[field];
-//     });
-
-//     const user = await User.findByIdAndUpdate(id, updatedFields, { new: true }).select('-password');
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-
-//     res.status(200).json({ success: true, message: "Profile updated successfully", data: user });
-//   } catch (error) {
-//     console.error("UPDATE USER PROFILE ERROR:", error);
-//     res.status(500).json({ success: false, message: "Failed to update profile", error: error.message });
-//   }
-// };
 
 
 
@@ -224,3 +186,88 @@ exports.getAllOrganizationProfiles = async (req, res) => {
   }
 };
 
+
+exports.getAreaAndZonalManagers = async (req, res) => {
+  try {
+    // 🔹 Fetch users by role
+    const areaManagers = await User.find({ role: "AM" }).select("-password");
+    const zonalManagers = await User.find({ role: "ZM" }).select("-password");
+
+    // 🔹 Attach organization profiles
+    const attachProfile = async (users) => {
+      return Promise.all(
+        users.map(async (user) => {
+          const profile = await OrganizationProfile.findOne({
+            userId: user._id,
+          });
+
+          return {
+            user,
+            organizationProfile: profile || null,
+          };
+        })
+      );
+    };
+
+    const areaManagerData = await attachProfile(areaManagers);
+    const zonalManagerData = await attachProfile(zonalManagers);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        areaManagers: areaManagerData,
+        zonalManagers: zonalManagerData,
+      },
+    });
+  } catch (error) {
+    console.error("GET MANAGERS ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch managers",
+      error: error.message,
+    });
+  }
+};
+
+
+
+// exports.getAreaAndZonalManagers = async (req, res) => {
+//   try {
+//     // 🔹 Fetch users by role
+//     const areaManagers = await User.find({ role: "AM" }).select("_id");
+//     const zonalManagers = await User.find({ role: "ZM" }).select("_id");
+
+//     // 🔹 Attach organization profiles
+//     const attachProfile = async (users) => {
+//       return Promise.all(
+//         users.map(async (user) => {
+//           const profile = await OrganizationProfile.findOne({ userId: user._id }).select("name");
+
+//           return {
+//             id: user._id,                        // MongoDB User _id
+//             userId: user._id,                     // for frontend
+//             name: profile?.name || null,         // name from OrganizationProfile
+//           };
+//         })
+//       );
+//     };
+
+//     const areaManagerData = await attachProfile(areaManagers);
+//     const zonalManagerData = await attachProfile(zonalManagers);
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         areaManagers: areaManagerData,
+//         zonalManagers: zonalManagerData,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("GET MANAGERS ERROR:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch managers",
+//       error: error.message,
+//     });
+//   }
+// };
