@@ -62,101 +62,35 @@ const getAllCustomers = async (req, res) => {
 };
 
 // GET CUSTOMER BY ID
-// const getCustomerById = async (req, res) => {
-//   try {
-//     const customer = await Customer.findById(req.params.id)
-//       .populate({
-//         path: "territoryId",
-//         populate: {
-//           path: "areaId",
-//           populate: [
-//             // OrganizationProfile → name
-//             { path: "areaManagerId", model: "OrganizationProfiles", select: "name" },
-//             { path: "zonalManagerId", model: "OrganizationProfiles", select: "name" },
-//             // User → email
-//             { path: "areaManagerId", model: "User", select: "email" },
-//             { path: "zonalManagerId", model: "User", select: "email" }
-//           ]
-//         }
-//       });
-
-//     if (!customer) {
-//       return res.status(404).json({ success: false, message: "Customer not found" });
-//     }
-
-//     res.status(200).json({ success: true, data: customer });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-
 const getCustomerById = async (req, res) => {
   try {
-    // Step 1: populate User emails
     const customer = await Customer.findById(req.params.id)
       .populate({
         path: "territoryId",
         populate: {
           path: "areaId",
           populate: [
+            // OrganizationProfile → name
+            { path: "areaManagerId", model: "OrganizationProfiles", select: "name" },
+            { path: "zonalManagerId", model: "OrganizationProfiles", select: "name" },
+            // User → email
             { path: "areaManagerId", model: "User", select: "email" },
-            { path: "zonalManagerId", model: "User", select: "email" },
-          ],
-        },
-        populate: {
-          path: "areaId",
-          populate: [
-            { path: "areaManagerId", model: "organizatonProfile", select: "name" },
-    
-          ],
-        },
-      })
-      .populate("addedBy", "name email");
+            { path: "zonalManagerId", model: "User", select: "email" }
+          ]
+        }
+      });
 
     if (!customer) {
       return res.status(404).json({ success: false, message: "Customer not found" });
     }
 
-    const area = customer.territoryId?.areaId;
-    if (!area) {
-      return res.status(200).json({ success: true, data: customer });
-    }
-
-    // Step 2: fetch OrganizationProfiles for both managers in a single query
-    const managerIds = [
-      area.areaManagerId?._id,
-      area.zonalManagerId?._id
-    ].filter(Boolean);
-
-    const profiles = await OrganizationProfile.find({ userId: { $in: managerIds } })
-      .select("userId name phone profilePic areaManager zonalManager");
-
-    // Step 3: attach OrganizationProfile info
-    profiles.forEach(profile => {
-      if (area.areaManagerId?._id.equals(profile.userId)) {
-        area.areaManagerId.name = profile.name;
-        area.areaManagerId.phone = profile.phone;
-        area.areaManagerId.profilePic = profile.profilePic;
-        area.areaManagerId.areaManager = profile.areaManager;
-        area.areaManagerId.zonalManager = profile.zonalManager;
-      }
-      if (area.zonalManagerId?._id.equals(profile.userId)) {
-        area.zonalManagerId.name = profile.name;
-        area.zonalManagerId.phone = profile.phone;
-        area.zonalManagerId.profilePic = profile.profilePic;
-        area.zonalManagerId.areaManager = profile.areaManager;
-        area.zonalManagerId.zonalManager = profile.zonalManager;
-      }
-    });
-
     res.status(200).json({ success: true, data: customer });
-
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
 
 
 const updateCustomer = async (req, res) => {
