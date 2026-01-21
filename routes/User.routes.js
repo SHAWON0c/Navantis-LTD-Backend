@@ -9,7 +9,7 @@ const {
   getAllOrganizationProfiles,
   getAreaAndZonalManagers
 } = require('../controllers/users/user.controller');
-const Authmiddleware = require('../middlewares/authMiddleware');
+const Authmiddleware = require('../middlewares/Authmiddleware');
 
 // 1️⃣ Organization routes first (static/dynamic)
 router.get('/organization/all-users', getAllOrganizationProfiles);   // Get all org profiles

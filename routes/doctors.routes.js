@@ -6,7 +6,7 @@ const {
   addProductToDoctor, 
   getDoctorProducts 
 } = require('../controllers/doctors/doctor.controller');
-const AuthMiddleware = require('../middlewares/authMiddleware');
+const AuthMiddleware = require('../middlewares/Authmiddleware');
 
 // ───────────── DOCTOR ROUTES ─────────────
 

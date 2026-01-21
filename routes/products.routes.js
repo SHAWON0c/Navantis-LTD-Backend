@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createProduct, getAllProducts, getAllBrands, getProductsByBrand, updateProduct, getProductById } = require('../controllers/products/product.controller');
-const AuthMiddleware = require('../middlewares/authMiddleware');
+const Authmiddleware = require('../middlewares/Authmiddleware');
 
 // Create a new product (protected: only IT-Officer or admin)
 router.post('/', createProduct);
