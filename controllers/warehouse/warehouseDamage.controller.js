@@ -1,7 +1,7 @@
 const WarehouseDamage = require("../../models/WarehouseDamage");
 const WarehouseReceive = require("../../models/WarehouseReceive.model");
 const WarehouseProduct = require("../../models/WarehouseProduct.model");
-const WarehouseStockOut = require("../../models/warehouseStockOut.mode");
+const WarehouseStockOut = require("../../models/warehouseStockOut.model");
 exports.createWarehouseDamage = async (req, res) => {
   try {
     const { warehouseReceiveId, damageQuantity, remarks, addedBy } = req.body;

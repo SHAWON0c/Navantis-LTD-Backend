@@ -1,4 +1,4 @@
-const WarehouseStockOut = require("../../models/warehouseStockOut.mode");
+const WarehouseStockOut = require("../../models/warehouseStockOut.model");
 
 exports.getAllWarehouseStockOuts = async (req, res) => {
   try {
