@@ -8,19 +8,25 @@ exports.createPurchaseOrder = async (req, res) => {
   try {
     const purchaseOrder = await PurchaseOrder.create({
       ...req.body,
-      addedBy: {
-        name: "Test User",   // hardcoded for testing
-        email: "test@example.com"
-      }
+      addedBy: req.user._id  // Logged-in user ID
     });
 
     res.status(201).json({
       success: true,
-      message: "Purchase order created successfully (TEST)",
+      message: "Purchase order created successfully",
       data: purchaseOrder
     });
   } catch (error) {
     console.error("Create Purchase Order Error:", error);
+
+    // Handle duplicate product+batch
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Purchase order with this product and batch already exists"
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: error.message || "Failed to create purchase order"
@@ -66,16 +72,20 @@ exports.createPurchaseOrder = async (req, res) => {
 
 // controllers/purchaseOrder.controller.js
 
+
 exports.getAllPurchaseOrders = async (req, res) => {
   try {
-    // Fetch all orders, sorted by creation date
-    const orders = await PurchaseOrder.find().sort({ createdAt: -1 });
+    // Fetch all orders, populate product info, sorted by creation date
+    const orders = await PurchaseOrder.find()
+      .populate("productId", "productName brand productShortCode packSize category")
+      .sort({ createdAt: -1 });
 
     // Calculate totals
     const totalUnits = orders.reduce((sum, o) => sum + (o.productQuantity || 0), 0);
     const totalTradePrice = orders.reduce((sum, o) => sum + ((o.tradePrice || 0) * (o.productQuantity || 0)), 0);
-    const uniqueProductsCount = new Set(orders.map(o => o.productId)).size;
+    const uniqueProductsCount = new Set(orders.map(o => o.productId?._id)).size;
 
+    // Send response
     res.status(200).json({
       success: true,
       count: orders.length,
@@ -95,25 +105,25 @@ exports.getAllPurchaseOrders = async (req, res) => {
 
 
 
-exports.getAllPendingPurchaseOrders = async (req, res) => {
-  try {
-    const orders = await PurchaseOrder.find({
-      warehouseStatus: "pending"
-    }).sort({ createdAt: -1 });
+// exports.getAllPendingPurchaseOrders = async (req, res) => {
+//   try {
+//     const orders = await PurchaseOrder.find({
+//       warehouseStatus: "pending"
+//     }).sort({ createdAt: -1 });
 
-    res.json({
-      success: true,
-      count: orders.length,
-      data: orders
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch pending purchase orders"
-    });
-  }
-};
+//     res.json({
+//       success: true,
+//       count: orders.length,
+//       data: orders
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch pending purchase orders"
+//     });
+//   }
+// };
 
 
 
@@ -167,6 +177,51 @@ exports.getAllPendingPurchaseOrders = async (req, res) => {
 //     });
 //   }
 // };
+
+exports.getAllPendingPurchaseOrders = async (req, res) => {
+  try {
+    // Fetch only pending orders + populate product info
+    const orders = await PurchaseOrder.find({
+      warehouseStatus: "pending"
+    })
+      .populate(
+        "productId",
+        "productName brand productShortCode packSize category"
+      )
+      .sort({ createdAt: -1 });
+
+    // Calculate totals (same logic as getAllPurchaseOrders)
+    const totalUnits = orders.reduce(
+      (sum, o) => sum + (o.productQuantity || 0),
+      0
+    );
+
+    const totalTradePrice = orders.reduce(
+      (sum, o) =>
+        sum + (o.tradePrice || 0) * (o.productQuantity || 0),
+      0
+    );
+
+    const uniqueProductsCount = new Set(
+      orders.map(o => o.productId?._id?.toString())
+    ).size;
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      uniqueProductsCount,
+      totalUnits,
+      totalTradePrice,
+      data: orders
+    });
+  } catch (error) {
+    console.error("Error fetching pending purchase orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch pending purchase orders"
+    });
+  }
+};
 
 
 

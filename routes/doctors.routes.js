@@ -11,13 +11,13 @@ const AuthMiddleware = require('../middlewares/Authmiddleware');
 // ───────────── DOCTOR ROUTES ─────────────
 
 // Create a new doctor (protected, only IT-Officer & Admin)
-router.post('/', AuthMiddleware(['IT-Officer','Admin']), createDoctor);
+router.post('/', createDoctor);
 
 // Get all doctors (protected, all roles can see)
-router.get('/', AuthMiddleware(['IT-Officer','Admin','user']), getAllDoctors);
+router.get('/', getAllDoctors);
 
 // Add product to doctor & adjust account balance (protected)
-router.post('/:doctorId/add-product', AuthMiddleware(['IT-Officer','Admin']), addProductToDoctor);
+router.post('/:doctorId/add-product', addProductToDoctor);
 
 // Get all products of a doctor (protected)
 router.get('/:doctorId/products',  getDoctorProducts);

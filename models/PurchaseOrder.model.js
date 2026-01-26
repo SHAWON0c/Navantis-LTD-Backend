@@ -7,79 +7,48 @@ const purchaseOrderSchema = new mongoose.Schema(
       ref: "Product",
       required: true
     },
-
-    productName: {
-      type: String,
-      required: true,
-      trim: true
-    },
-
-    netWeight: {
-      value: {
-        type: Number,
-        required: true
-      },
-      unit: {
-        type: String,
-        enum: ["ml", "gm"],
-        required: true
-      }
-    },
-
-    category: {
-      type: String,
-      required: true
-    },
-
     productQuantity: {
       type: Number,
-      required: true
+      required: true,
+      min: 1
     },
-
     batch: {
       type: String,
       required: true
     },
-
     expireDate: {
       type: Date,
       required: true
     },
-
     actualPrice: {
       type: Number,
-      required: true
+      required: true,
+      min: 0
     },
-
     tradePrice: {
       type: Number,
-      required: true
+      required: true,
+      min: 0
     },
-
     purchaseDate: {
       type: Date,
       default: Date.now
     },
-
-    // ✅ DEFAULT warehouse status
     warehouseStatus: {
       type: String,
       enum: ["pending", "received"],
       default: "pending"
     },
-
     addedBy: {
-      name: {
-        type: String,
-        required: true
-      },
-      email: {
-        type: String,
-        required: true
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     }
   },
   { timestamps: true }
 );
+
+// Compound index to prevent duplicate product+batch entries
+purchaseOrderSchema.index({ productId: 1, batch: 1 }, { unique: true });
 
 module.exports = mongoose.model("PurchaseOrder", purchaseOrderSchema);
