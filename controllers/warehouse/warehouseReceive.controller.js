@@ -3,6 +3,7 @@ const PurchaseOrder = require("../../models/PurchaseOrder.model");
 const WarehouseStockIn = require("../../models/WarehouseStockIn.model");
 const WarehouseProduct = require("../../models/WarehouseProduct.model");
 const purchaseOrder = require("../../models/PurchaseOrder.model");
+const User = require("../../models/User.model");
 const mongoose = require("mongoose");
 
 // exports.createWarehouseReceive = async (req, res) => {
@@ -171,44 +172,69 @@ exports.createWarehouseReceive = async (req, res) => {
   }
 };
 
+// exports.getAllWarehouseReceives = async (req, res) => {
+//   try {
+//     const receives = await WarehouseReceive.find().sort({ receiveDate: -1 });
+
+//     res.json({
+//       success: true,
+//       count: receives.length,
+//       data: receives
+//     });
+//   } catch (error) {
+//     console.error("Error fetching warehouse receives:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch warehouse receives"
+//     });
+//   }
+// };
+
 exports.getAllWarehouseReceives = async (req, res) => {
-    try {
-        const receives = await WarehouseReceive.find()
-            .select(
-                "receiveDate productName productShortCode netWeight batch expireDate boxQuantity productQuantityWithBox productQuantityWithoutBox status remarks addedBy"
-            )
-            .sort({ receiveDate: -1 });
+  try {
+    // 1️⃣ Fetch all warehouse receives
+    const receives = await WarehouseReceive.find().sort({ receiveDate: -1 });
 
-        const formattedReceives = receives.map(r => ({
-            _id: r._id, // ✅ include MongoDB document ID
-            purchaseOrderId: r.purchaseOrderId,
-            receiveDate: r.receiveDate,
-            productName: r.productName,
-            productShortCode: r.productShortCode,
-            netWeight: `${r.netWeight.value} ${r.netWeight.unit}`,
-            batch: r.batch,
-            expireDate: r.expireDate,
-            boxQuantity: r.boxQuantity,
-            productQuantityWithBox: r.productQuantityWithBox,
-            productQuantityWithoutBox: r.productQuantityWithoutBox,
-            remarks: r.remarks,
-            status: r.status,
-            addedByName: r.addedBy?.name,
-            addedByEmail: r.addedBy?.email
-        }));
+    // 2️⃣ Extract valid user IDs only
+    const userIds = receives
+      .map(r => r.addedBy)
+      .filter(id => mongoose.Types.ObjectId.isValid(id));
 
-        res.json({
-            success: true,
-            count: formattedReceives.length,
-            data: formattedReceives
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Failed to fetch warehouse receives"
-        });
-    }
+    // 3️⃣ Fetch full user info for valid IDs
+    const users = await User.find({ _id: { $in: userIds } });
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u._id] = u.toObject(); // store full user object
+    });
+
+    // 4️⃣ Replace addedBy with full user object, skip invalid IDs
+    const populatedReceives = receives.map(r => {
+      const obj = r.toObject();
+      // If addedBy is a valid ObjectId, replace with user info; else keep as-is
+      obj.addedBy = mongoose.Types.ObjectId.isValid(r.addedBy)
+        ? userMap[r.addedBy] || null
+        : r.addedBy;
+      return obj;
+    });
+
+    // 5️⃣ Send response
+    res.json({
+      success: true,
+      count: populatedReceives.length,
+      data: populatedReceives
+    });
+  } catch (error) {
+    console.error("Error fetching warehouse receives:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch warehouse receives"
+    });
+  }
 };
+
+
+
+
 
 exports.getAllWarehouseStockIn = async (req, res) => {
     try {

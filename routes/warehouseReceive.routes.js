@@ -31,35 +31,35 @@ const {
 } = require("../validation/warehouseReceive.validator");
 
 const { validate } = require("../middlewares/validate");
-const auth = require("../middlewares/Authmiddleware");
+const AuthMiddleware = require("../middlewares/Authmiddleware");
 
 // 📥 Create warehouse receive (PENDING)
 router.post(
   "/receive",
-  auth,
-  createWarehouseReceiveValidation,
-  validate,
+  AuthMiddleware(),
+  // createWarehouseReceiveValidation,
+  // validate,
   createWarehouseReceive
 );
 
 // 📄 Get all warehouse receives
 router.get(
   "/receive",
-  auth,
+    AuthMiddleware(["admin", "managing-director"]),  
   getAllWarehouseReceives
 );
 
 // ✏️ Update warehouse receive (approve / reject)
 router.put(
   "/receive/:id",
-  auth,
+    AuthMiddleware(),
   updateWarehouseReceive
 );
 
 // 📦 Get all stock-in (approved receives)
 router.get(
   "/stock-in",
-  auth,
+    AuthMiddleware(),
   getAllWarehouseStockIn
 );
 
