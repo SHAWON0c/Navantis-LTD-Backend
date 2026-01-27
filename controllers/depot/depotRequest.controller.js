@@ -542,7 +542,7 @@ const updateDepotRequestStatus = async (req, res) => {
 };
 
 // ------------------------------
-// EXPORT CONTROLLERS
+// EXPORT CONTROLLERS .
 // ------------------------------
 module.exports = {
   createDepotRequest,
