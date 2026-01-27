@@ -4,21 +4,25 @@ const {
   createWarehouseDamage,
   getWarehouseDamageReport,
   updateWarehouseDamage,
-  getAllWarehouseDamages
+  getAllWarehouseDamages,
+  getPendingWarehouseDamages,
+  approveWarehouseDamage
 } = require("../controllers/warehouse/warehouseDamage.controller");
+
+const AuthMiddleware = require("../middlewares/Authmiddleware");
 
 // 1️⃣ Create a new warehouse damage record
 // POST /api/warehouse/damage
-router.post("/damage", createWarehouseDamage);
+router.post("/damage",   AuthMiddleware(["admin", "managing-director"]),  createWarehouseDamage);
 
-// 2️⃣ Get warehouse damage report
-// GET /api/warehouse/damage-report
-router.get("/damage-report", getWarehouseDamageReport);
-router.get("/damage-report-all", getAllWarehouseDamages);
+router.get("/pening", getPendingWarehouseDamages);
 
 
-// 3️⃣ Update warehouse damage (approve & process stock-out)
-// PUT /api/warehouse/damage/:id
-router.put("/damage/:id", updateWarehouseDamage);
+router.put(
+  "/approve/:id",
+ AuthMiddleware(["admin", "managing-director"]), 
+approveWarehouseDamage
+);
+
 
 module.exports = router;

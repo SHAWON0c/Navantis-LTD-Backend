@@ -6,40 +6,30 @@ const warehouseDamageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "WarehouseReceive",
       required: true,
-      unique: true // ✅ Prevent duplicates
+      unique: true // prevent duplicate damage entry per receive
     },
 
-    purchaseOrderId: {
+    damageQuantity: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+
+    remarks: {
+      type: String
+    },
+
+    addedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchaseOrder",
+      ref: "User", // 👈 user id
       required: true
     },
 
-    productName: { type: String, required: true },
-    productShortCode: { type: String, required: true },
-
-    netWeight: {
-      value: { type: Number, required: true },
-      unit: { type: String, enum: ["ml", "gm"], required: true }
-    },
-
-    batch: { type: String, required: true },
-    expireDate: { type: Date, required: true },
-    boxQuantity: { type: Number, required: true },
-    productQuantityWithBox: { type: Number, required: true },
-    productQuantityWithoutBox: { type: Number, required: true },
-
-    damageQuantity: { type: Number, required: true },
-    remarks: { type: String },
-
-    addedBy: {
-      name: { type: String, required: true },
-      email: { type: String, required: true }
-    },
-
-    receiveDate: { type: Date, required: true },
-
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" } // ✅ Default status
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    }
   },
   { timestamps: true }
 );
