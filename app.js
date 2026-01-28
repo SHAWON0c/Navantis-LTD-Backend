@@ -61,6 +61,8 @@ const territoryRoutes = require('./routes/territory.routes');
 const customerRoutes = require('./routes/customer.routes');
 const marketPointRoutes = require("./routes/marketPoint.route");
 
+const organizationRoutes =require("./routes/organizationProfile.routes");
+
 const app = express();
 
 // ───────────── DATABASE ─────────────
@@ -87,6 +89,9 @@ app.use("/api/areas", areaRoutes);
 app.use("/api/territories", territoryRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/market-points",marketPointRoutes)
+
+app.use("/api/organization-profiles", organizationRoutes)
+
 
 
 
