@@ -60,6 +60,7 @@ const areaRoutes = require('./routes/area.routes');
 const territoryRoutes = require('./routes/territory.routes');
 const customerRoutes = require('./routes/customer.routes');
 const marketPointRoutes = require("./routes/marketPoint.route");
+
 const app = express();
 
 // ───────────── DATABASE ─────────────
@@ -86,6 +87,9 @@ app.use("/api/areas", areaRoutes);
 app.use("/api/territories", territoryRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/market-points",marketPointRoutes)
+
+
+
 // ───────────── HEALTH CHECK ─────────────
 app.get('/', (req, res) => {
   res.send('🚀 Server is running');

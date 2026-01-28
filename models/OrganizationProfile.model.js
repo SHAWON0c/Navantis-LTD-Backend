@@ -6,24 +6,36 @@ const organizationProfileSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true // one profile per user
+      unique: true
     },
+
     name: { type: String, required: true },
-    phone: { type: String },
-    email: { type: String },
-    designation: { type: String },
-    workplace: { type: String }, // e.g., Field / HQ
-    territory: { type: String },
-    area: { type: String },
-    areaManager: { type: String },
-    zonalManager: { type: String },
-    profilePic: { type: String }, // store URL/path
+    phone: String,
+    email: String,
+
+    designation: String,
+
+    workplace: { type: String }, // Field / HQ
+
+    territoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Territory"
+    },
+
+    profilePic: String,
+
     joinedAt: { type: Date, default: Date.now },
+
     history: [
       {
-        action: { type: String },
-        date: { type: Date, default: Date.now },
-        details: { type: String }
+        action: { type: String, required: true },
+        oldValue: String,
+        newValue: String,
+        updatedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
+        },
+        date: { type: Date, default: Date.now }
       }
     ]
   },

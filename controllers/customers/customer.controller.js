@@ -4,13 +4,16 @@ const OrganizationProfile = require("../../models/OrganizationProfile.model");
 
 const createCustomer = async (req, res) => {
   try {
-    if (!req.body.addedBy) {
-      return res.status(400).json({ success: false, message: "addedBy is required" });
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
     const customer = await Customer.create({
       customerName: req.body.customerName,
-      territoryId: req.body.territoryId,
+      marketPointId: req.body.marketPointId,
       tradeLicense: req.body.tradeLicense,
       drugLicense: req.body.drugLicense,
       address: req.body.address,
@@ -21,7 +24,7 @@ const createCustomer = async (req, res) => {
       payMode: req.body.payMode,
       creditLimit: req.body.creditLimit,
       dayLimit: req.body.dayLimit,
-      addedBy: req.body.addedBy,
+      addedBy: req.user._id, // ✅ correct
       status: "pending",
     });
 
@@ -39,11 +42,20 @@ const createCustomer = async (req, res) => {
         mobileNormalized: "Mobile",
         emailNormalized: "Email",
       };
-      return res.status(400).json({ success: false, message: `${fieldMap[field]} already exists` });
+
+      return res.status(400).json({
+        success: false,
+        message: `${fieldMap[field]} already exists`,
+      });
     }
-    res.status(500).json({ success: false, message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
+
 
 
 
@@ -51,7 +63,7 @@ const createCustomer = async (req, res) => {
 const getAllCustomers = async (req, res) => {
   try {
     const customers = await Customer.find()
-      .populate("territoryId", "name")
+      .populate("marketPointId", "name")
       .populate("addedBy", "name email")
       .sort({ createdAt: -1 });
 
@@ -61,27 +73,30 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
+
 // GET CUSTOMER BY ID
 const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id)
       .populate({
-        path: "territoryId",
+        path: "marketPointId",
         populate: {
           path: "areaId",
           populate: [
-            // OrganizationProfile → name
-            { path: "areaManagerId", model: "OrganizationProfiles", select: "name" },
-            { path: "zonalManagerId", model: "OrganizationProfiles", select: "name" },
-            // User → email
+            { path: "areaManagerId", model: "OrganizationProfile", select: "name" },
+            { path: "zonalManagerId", model: "OrganizationProfile", select: "name" },
             { path: "areaManagerId", model: "User", select: "email" },
             { path: "zonalManagerId", model: "User", select: "email" }
           ]
         }
-      });
+      })
+      .populate("addedBy", "name email");
 
     if (!customer) {
-      return res.status(404).json({ success: false, message: "Customer not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
     }
 
     res.status(200).json({ success: true, data: customer });
@@ -129,16 +144,15 @@ const getCustomersByStatus = async (req, res) => {
   try {
     const { status } = req.params;
 
-    // validate status
     if (!["pending", "approved", "active"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Status must be 'pending' or 'approved'",
+        message: "Status must be 'pending', 'approved', or 'active'",
       });
     }
 
     const customers = await Customer.find({ status })
-      .populate("territoryId", "territoryName")
+      .populate("marketPointId", "name")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -153,6 +167,7 @@ const getCustomersByStatus = async (req, res) => {
     });
   }
 };
+
 
 // EXPORT ALL FUNCTIONS
 module.exports = {

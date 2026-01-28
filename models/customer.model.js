@@ -20,9 +20,9 @@ const customerSchema = new mongoose.Schema(
       set: capitalizeWords,
     },
 
-    territoryId: {
+    marketPointId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Territory",
+      ref: "MarketPoint",
       required: true,
     },
 
